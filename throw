@@ -1,77 +1,66 @@
-local onionModel = script.Parent  -- The onion model in the game (multiple parts)
-local throwSpeed = 50  -- Speed of throwing the onion
-local damageAmount = 20  -- Damage to apply when the onion hits a player
-local carryDistance = 5  -- Distance at which the player can carry the onion
-local isThrown = false  -- Flag to check if the onion is thrown
-local isCarried = false  -- Flag to check if the onion is being carried
-local carriedBy = nil  -- Reference to the player carrying the onion
+local unionObject = script.Parent  -- The union object in the game (single part)
+local throwSpeed = 50  -- Speed at which the union is thrown
+local damageAmount = 20  -- Damage to apply when the union hits a player
+local carryDistance = 5  -- Distance at which the player can carry the union
+local isThrown = false  -- Flag to check if the union is thrown
+local isCarried = false  -- Flag to check if the union is being carried
+local carriedBy = nil  -- Reference to the player carrying the union
 
--- Function to throw the onion
-function throwOnion()
+-- Function to throw the union
+function throwUnion()
     if isCarried and carriedBy then
-        -- Add BodyVelocity to all parts of the onion model
-        for _, part in pairs(onionModel:GetChildren()) do
-            if part:IsA("BasePart") then
-                local bodyVelocity = Instance.new("BodyVelocity")
-                bodyVelocity.MaxForce = Vector3.new(5000, 5000, 5000)  -- Ensure the onion is thrown with enough force
-                bodyVelocity.Velocity = (carriedBy.Character.HumanoidRootPart.CFrame.LookVector * throwSpeed) -- Throw direction
-                bodyVelocity.Parent = part
-                -- Optionally, remove the velocity after a short time
-                game.Debris:AddItem(bodyVelocity, 0.5)  -- Remove BodyVelocity after 0.5 seconds
-            end
-        end
+        -- Apply BodyVelocity to the union object
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(5000, 5000, 5000)  -- Ensure the union is thrown with enough force
+        bodyVelocity.Velocity = (carriedBy.Character.HumanoidRootPart.CFrame.LookVector * throwSpeed) -- Throw direction
+        bodyVelocity.Parent = unionObject
+        
+        -- Optionally, remove the velocity after a short time
+        game.Debris:AddItem(bodyVelocity, 0.5)  -- Remove BodyVelocity after 0.5 seconds
 
-        -- Set the onion as thrown and reset carrying state
+        -- Set the union as thrown and reset carrying state
         isThrown = true
         isCarried = false
         carriedBy = nil
     end
 end
 
--- Function to detect if a player is close enough to pick up the onion
+-- Function to detect if a player is close enough to pick up the union
 function onProximityDetected(player)
     local character = player.Character
-    if not character or isThrown then return end  -- Don't allow carry if the onion is thrown
+    if not character or isThrown then return end  -- Don't allow carry if the union is thrown
 
     -- Check if the player is within carrying distance
-    local distance = (onionModel.PrimaryPart.Position - character.HumanoidRootPart.Position).Magnitude
+    local distance = (unionObject.Position - character.HumanoidRootPart.Position).Magnitude
     if distance <= carryDistance then
-        -- Allow the player to carry the onion
+        -- Allow the player to carry the union
         if not isCarried then
             isCarried = true
             carriedBy = player
-            onionModel:SetPrimaryPartCFrame(character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2))  -- Position the onion relative to the player
+            unionObject.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)  -- Position the union relative to the player
 
-            -- Disable physics for all parts of the onion (anchored)
-            for _, part in pairs(onionModel:GetChildren()) do
-                if part:IsA("BasePart") then
-                    part.Anchored = true
-                end
-            end
+            -- Disable physics for the union (anchored)
+            unionObject.Anchored = true
 
-            print(player.Name .. " is now carrying the onion!")
+            print(player.Name .. " is now carrying the union!")
         end
     end
 end
 
--- Function to release the onion
-function releaseOnion()
+-- Function to release the union
+function releaseUnion()
     if isCarried and carriedBy then
-        -- Release the onion
+        -- Release the union
         isCarried = false
-        -- Re-enable physics and reset the position of the onion in the workspace
-        onionModel.Parent = game.Workspace
-        for _, part in pairs(onionModel:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.Anchored = false  -- Re-enable physics
-            end
-        end
-        print(carriedBy.Name .. " released the onion.")
+        -- Re-enable physics and reset the position of the union in the workspace
+        unionObject.Parent = game.Workspace
+        unionObject.Anchored = false  -- Re-enable physics
+        print(carriedBy.Name .. " released the union.")
     end
 end
 
--- Function to handle onion collision with players
-function onOnionHit(other)
+-- Function to handle union collision with players
+function onUnionHit(other)
     if not isThrown then return end  -- Only damage if thrown
 
     local character = other.Parent
@@ -81,7 +70,7 @@ function onOnionHit(other)
         -- Apply damage to the player
         humanoid:TakeDamage(damageAmount)
 
-        -- Reset the throw flag after the onion hits the player
+        -- Reset the throw flag after the union hits the player
         isThrown = false
     end
 end
@@ -90,14 +79,21 @@ end
 game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
 
-    -- Press "E" to pick up the onion or "R" to release it
+    -- Press "E" to pick up the union or "R" to release it
     if input.KeyCode == Enum.KeyCode.E then
         if not isCarried then
-            -- Attempt to carry the onion
+            -- Attempt to carry the union
             local player = game.Players.LocalPlayer
             onProximityDetected(player)
         end
     elseif input.KeyCode == Enum.KeyCode.R then
-        -- Release the onion
-        releaseOnion()
-    elseif in
+        -- Release the union
+        releaseUnion()
+    elseif input.KeyCode == Enum.KeyCode.T then
+        -- Throw the union
+        throwUnion()
+    end
+end)
+
+-- Connect the Touched event for collision detection
+unionObject.Touched:Connect(onUnionHit)
