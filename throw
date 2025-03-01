@@ -1,63 +1,77 @@
-local chair = script.Parent  -- The chair part in the game
-local throwSpeed = 50  -- Speed of throwing the chair
-local damageAmount = 20  -- Damage to apply when the chair hits a player
-local carryDistance = 5  -- Distance at which the player can carry the chair
-local isThrown = false  -- Flag to check if the chair is thrown
-local isCarried = false  -- Flag to check if the chair is being carried
-local carriedBy = nil  -- Reference to the player carrying the chair
+local onionModel = script.Parent  -- The onion model in the game (multiple parts)
+local throwSpeed = 50  -- Speed of throwing the onion
+local damageAmount = 20  -- Damage to apply when the onion hits a player
+local carryDistance = 5  -- Distance at which the player can carry the onion
+local isThrown = false  -- Flag to check if the onion is thrown
+local isCarried = false  -- Flag to check if the onion is being carried
+local carriedBy = nil  -- Reference to the player carrying the onion
 
--- Function to throw the chair
-function throwChair()
+-- Function to throw the onion
+function throwOnion()
     if isCarried and carriedBy then
-        -- Add BodyVelocity to throw the chair
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(5000, 5000, 5000)  -- Ensure the chair is thrown with enough force
-        bodyVelocity.Velocity = (carriedBy.Character.HumanoidRootPart.CFrame.LookVector * throwSpeed) -- Throw direction
-        bodyVelocity.Parent = chair
+        -- Add BodyVelocity to all parts of the onion model
+        for _, part in pairs(onionModel:GetChildren()) do
+            if part:IsA("BasePart") then
+                local bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.MaxForce = Vector3.new(5000, 5000, 5000)  -- Ensure the onion is thrown with enough force
+                bodyVelocity.Velocity = (carriedBy.Character.HumanoidRootPart.CFrame.LookVector * throwSpeed) -- Throw direction
+                bodyVelocity.Parent = part
+                -- Optionally, remove the velocity after a short time
+                game.Debris:AddItem(bodyVelocity, 0.5)  -- Remove BodyVelocity after 0.5 seconds
+            end
+        end
 
-        -- Optionally, remove the velocity after a short time
-        game.Debris:AddItem(bodyVelocity, 0.5)  -- Remove BodyVelocity after 0.5 seconds
-
-        -- Set the chair as thrown and reset carrying state
+        -- Set the onion as thrown and reset carrying state
         isThrown = true
         isCarried = false
         carriedBy = nil
     end
 end
 
--- Function to detect if a player is close enough to pick up the chair
+-- Function to detect if a player is close enough to pick up the onion
 function onProximityDetected(player)
     local character = player.Character
-    if not character or isThrown then return end  -- Don't allow carry if the chair is thrown
+    if not character or isThrown then return end  -- Don't allow carry if the onion is thrown
 
     -- Check if the player is within carrying distance
-    local distance = (chair.Position - character.HumanoidRootPart.Position).Magnitude
+    local distance = (onionModel.PrimaryPart.Position - character.HumanoidRootPart.Position).Magnitude
     if distance <= carryDistance then
-        -- Allow the player to carry the chair
+        -- Allow the player to carry the onion
         if not isCarried then
             isCarried = true
             carriedBy = player
-            chair.Anchored = true  -- Disable physics while carrying
-            chair.Parent = character -- Make the chair follow the player
-            chair.CFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)  -- Position the chair relative to the player
-            print(player.Name .. " is now carrying the chair!")
+            onionModel:SetPrimaryPartCFrame(character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2))  -- Position the onion relative to the player
+
+            -- Disable physics for all parts of the onion (anchored)
+            for _, part in pairs(onionModel:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                end
+            end
+
+            print(player.Name .. " is now carrying the onion!")
         end
     end
 end
 
--- Function to release the chair
-function releaseChair()
+-- Function to release the onion
+function releaseOnion()
     if isCarried and carriedBy then
-        -- Release the chair
+        -- Release the onion
         isCarried = false
-        chair.Parent = game.Workspace  -- Move the chair back to workspace
-        chair.Anchored = false  -- Re-enable physics
-        print(carriedBy.Name .. " released the chair.")
+        -- Re-enable physics and reset the position of the onion in the workspace
+        onionModel.Parent = game.Workspace
+        for _, part in pairs(onionModel:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false  -- Re-enable physics
+            end
+        end
+        print(carriedBy.Name .. " released the onion.")
     end
 end
 
--- Function to handle chair collision with players
-function onChairHit(other)
+-- Function to handle onion collision with players
+function onOnionHit(other)
     if not isThrown then return end  -- Only damage if thrown
 
     local character = other.Parent
@@ -67,7 +81,7 @@ function onChairHit(other)
         -- Apply damage to the player
         humanoid:TakeDamage(damageAmount)
 
-        -- Reset the throw flag after the chair hits the player
+        -- Reset the throw flag after the onion hits the player
         isThrown = false
     end
 end
@@ -76,21 +90,14 @@ end
 game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
 
-    -- Press "E" to pick up the chair or "R" to release it
+    -- Press "E" to pick up the onion or "R" to release it
     if input.KeyCode == Enum.KeyCode.E then
         if not isCarried then
-            -- Attempt to carry the chair
+            -- Attempt to carry the onion
             local player = game.Players.LocalPlayer
             onProximityDetected(player)
         end
     elseif input.KeyCode == Enum.KeyCode.R then
-        -- Release the chair
-        releaseChair()
-    elseif input.KeyCode == Enum.KeyCode.T then
-        -- Throw the chair
-        throwChair()
-    end
-end)
-
--- Connect the Touched event for collision detection
-chair.Touched:Connect(onChairHit)
+        -- Release the onion
+        releaseOnion()
+    elseif in
